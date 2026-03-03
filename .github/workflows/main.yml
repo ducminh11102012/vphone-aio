@@ -1,0 +1,75 @@
+name: vphone-aio-full
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vphone:
+    runs-on: macos-latest
+    timeout-minutes: 360
+
+    steps:
+
+      # 1️⃣ Checkout fork repo (đã có part files)
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # 2️⃣ Install prerequisites
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install git-lfs wget zstd libimobiledevice
+          brew install ngrok/ngrok/ngrok
+
+      # 3️⃣ Verify split parts exist
+      - name: Check archive parts
+        run: |
+          ls -lh vphone-cli.tar.zst.part_*
+
+      # 4️⃣ Merge split archive
+      - name: Merge archive
+        run: |
+          cat vphone-cli.tar.zst.part_* > vphone-cli.tar.zst
+          ls -lh vphone-cli.tar.zst
+
+      # 5️⃣ Extract archive
+      - name: Extract archive
+        run: |
+          zstd -dc vphone-cli.tar.zst | tar xf -
+
+      # 6️⃣ Cleanup to save disk
+      - name: Cleanup archive
+        run: |
+          rm -f vphone-cli.tar.zst
+          rm -f vphone-cli.tar.zst.part_*
+
+      # 7️⃣ Make launcher executable
+      - name: Permission
+        run: chmod +x vphone-aio.sh
+
+      # 8️⃣ Start vPhone launcher
+      - name: Run vPhone
+        run: |
+          ./vphone-aio.sh &
+          sleep 120
+
+      # 9️⃣ Setup ngrok
+      - name: Setup ngrok auth
+        run: |
+          ngrok config add-authtoken 2nyiyWrhpT6OwyUoaoZ2zdE9nNo_7KtHBQxaox3Wx2t9qBHTT
+
+      # 🔟 Open VNC port
+      - name: Start ngrok VNC tunnel
+        run: |
+          ngrok tcp 5901 > ngrok.log &
+          sleep 15
+          cat ngrok.log
+
+      # 11️⃣ Keep machine alive
+      - name: Keep runner alive
+        run: |
+          while true; do
+            echo "vPhone running..."
+            sleep 60
+          done
