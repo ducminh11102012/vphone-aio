@@ -29,7 +29,7 @@ jobs:
         run: |
           ngrok config add-authtoken 2nyiyWrhpT6OwyUoaoZ2zdE9nNo_7KtHBQxaox3Wx2t9qBHTT
 
-      # Download parts (README step)
+      # Download parts
       - name: Download split archive
         run: |
           for p in aa ab ac ad ae af ag; do
@@ -37,7 +37,7 @@ jobs:
             "https://github.com/34306/vphone-aio/raw/refs/heads/main/vphone-cli.tar.zst.part_${p}?download="
           done
 
-      # Merge
+      # Merge archive
       - name: Merge archive
         run: |
           cat vphone-cli.tar.zst.part_* > vphone-cli.tar.zst
@@ -52,28 +52,22 @@ jobs:
         run: |
           rm -rf .git
           rm -f vphone-cli.tar.zst*
-      
+
       # Make executable
       - name: Permission
         run: chmod +x vphone-aio.sh
 
-      # Start vPhone
-      - name: Run vPhone
+      # Start vphone + ngrok
+      - name: Start vphone + ngrok
         run: |
           ./vphone-aio.sh &
+
           sleep 60
 
-      # Open VNC tunnel
-      - name: Start ngrok TCP tunnel
-        run: |
           ngrok tcp 5901 > ngrok.log &
+
           sleep 10
           cat ngrok.log
 
-      # Keep runner alive
-      - name: Keep alive
-        run: |
-          while true; do
-            echo "vPhone running..."
-            sleep 60
-          done
+          echo "=== KEEP RUNNER ALIVE ==="
+          while true; do sleep 300; done
